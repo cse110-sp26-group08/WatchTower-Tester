@@ -70,7 +70,7 @@ Make sure these files are in the same tester folder:
 
 ```text
 WatchTower-Tester/
-  WatchTower_Collector_Test.html
+  index.html
   collector.js
 ```
 
@@ -89,7 +89,7 @@ Important checks:
 
 - Use `src`, not `href`.
 - Keep `id="collector-script"` because the current collector reads config from that script element.
-- Make sure the API key in `WatchTower_Collector_Test.html` matches a valid app API key from the backend/database.
+- Make sure the API key in `index.html` matches a valid app API key from the backend/database.
 - Make sure `collector.js` points to the backend:
 
 
@@ -103,7 +103,7 @@ py -3 -m http.server 5501 --bind 127.0.0.1
 Open the tester page:
 
 ```text
-http://127.0.0.1:5501/WatchTower_Collector_Test.html
+http://127.0.0.1:5501/
 ```
 
 Use this flow:
@@ -118,8 +118,8 @@ The tester includes these event checks:
 - `Manual error`: sends a manually tracked error event.
 - `Runtime error`: triggers the browser `error` listener.
 - `Promise rejection`: triggers the browser `unhandledrejection` listener.
-- `Page performance`: sends page load metrics.
-- `Fetch 14 MB image`: fetches a large public image to test API latency tracking.
+- `Page performance`: reminds you that page performance is sent automatically when the collector script loads.
+- `Fetch 12 MB image`: fetches a large public image to test API latency tracking.
 - `Fetch 21 MB image`: fetches a larger public image to test API latency tracking.
 - `Direct error POST`: sends a direct backend smoke test event.
 - `Direct performance POST`: sends a direct backend smoke test event.
