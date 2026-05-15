@@ -1,17 +1,31 @@
-# WatchTower&Tester App Local Setup Guide
+# WatchTower Tester
 
-Use this guide to run the WatchTower backend server, dashboard, and collector tester locally.
+Use this tester to verify that the WatchTower collector can send error and performance events to the backend.
 
-## 1. Get The Latest Project Code
+The tester is hosted on GitHub Pages:
 
-If you do not have the project yet, clone it from GitHub:
+```text
+https://cse110-sp26-group08.github.io/WatchTower-Tester/
+```
+
+The hosted tester sends events to the backend URL hardcoded in `collector.js`:
+
+```text
+http://localhost:3000
+```
+
+That means each person using the tester must run the WatchTower backend locally first.
+
+## 1. Get The Latest WatchTower Backend
+
+If you do not have the WatchTower project yet, clone it from GitHub:
 
 ```bash
-git clone <repo-url>
+git clone git@github.com:cse110-sp26-group08/WatchTower.git
 cd WatchTower
 ```
 
-If you already cloned the project, update your local copy:
+If you already cloned it, update your local copy:
 
 ```bash
 cd WatchTower
@@ -29,9 +43,9 @@ Put the file here:
 WatchTower/backend/.env
 ```
 
-Important checks:
+Check the filename carefully:
 
-- The filename must be exactly `.env`.
+- It must be exactly `.env`.
 - It should not be named `env`, `.env.txt`, or `env.txt`.
 - Do not commit `.env` to GitHub.
 
@@ -46,7 +60,7 @@ npm install
 
 ## 4. Start The Backend Server
 
-Run this command from the `WatchTower/backend` directory:
+Run this from the `WatchTower/backend` directory:
 
 ```bash
 npm start
@@ -59,78 +73,41 @@ Connected to MongoDB
 WatchTower backend listening on http://localhost:3000
 ```
 
-Keep this terminal open while working. Press `Ctrl+C` to stop the backend server.
+Keep this terminal open while using the tester. Press `Ctrl+C` to stop the backend.
 
+## 5. Open The Hosted Tester
 
-## 5. Tester App
-
-The tester app validates that `collector.js` can send error and performance events to the backend.
-
-Make sure these files are in the same tester folder:
+Open:
 
 ```text
-WatchTower-Tester/
-  index.html
-  collector.js
-```
-
-The tester loads the collector through a script tag, the same way a real monitored app would:
-
-```html
-<script
-  id="collector-script"
-  src="./collector.js"
-  data-apikey="YOUR_APP_API_KEY"
-  data-release="1.0.0">
-</script>
-```
-
-Important checks:
-
-- Use `src`, not `href`.
-- Keep `id="collector-script"` because the current collector reads config from that script element.
-- Make sure the API key in `index.html` matches a valid app API key from the backend/database.
-- Make sure `collector.js` points to the backend:
-
-
-Start the tester from the `WatchTower-Tester` directory:
-
-```bash
-cd WatchTower-Tester
-py -3 -m http.server 5501 --bind 127.0.0.1
-```
-
-Open the tester page:
-
-```text
-http://127.0.0.1:5501/
+https://cse110-sp26-group08.github.io/WatchTower-Tester/
 ```
 
 Use this flow:
 
 1. Click `Load script tag`.
-2. Click one tester button, such as `Manual error` or `Page performance`.
+2. Click a test button, such as `Manual error`, `Runtime error`, or `Fetch 12 MB image`.
 3. Check the Network Log.
 4. A successful event should show `201 Created`.
 
-The tester includes these event checks:
+The tester buttons include:
 
-- `Manual error`: sends a manually tracked error event.
+- `Manual error`: triggers a normal JavaScript error for the collector to report.
 - `Runtime error`: triggers the browser `error` listener.
 - `Promise rejection`: triggers the browser `unhandledrejection` listener.
 - `Page performance`: reminds you that page performance is sent automatically when the collector script loads.
-- `Fetch 12 MB image`: fetches a large public image to test API latency tracking.
-- `Fetch 21 MB image`: fetches a larger public image to test API latency tracking.
-- `Direct error POST`: sends a direct backend smoke test event.
-- `Direct performance POST`: sends a direct backend smoke test event.
+- `Fetch 12 MB image`: fetches a large public image to test fetch-latency tracking.
+- `Fetch 21 MB image`: fetches a larger public image to test fetch-latency tracking.
+- `Direct error POST`: bypasses the collector and smoke-tests the error endpoint.
+- `Direct performance POST`: bypasses the collector and smoke-tests the performance endpoint.
 
-The tester intentionally forces `sendBeacon` to fall back to `fetch` so it can display backend status codes and response bodies in the log.
+The tester intentionally forces `sendBeacon` to fall back to `fetch` so it can display backend status codes and response bodies.
 
 ## 6. Check Saved Events
 
-You can check saved collector events through the backend API.
+You can check saved events through the backend API.
 
-Replace this app id if your app uses a different one:
+Current app id used by the tester:
 
 ```text
 6a056df9898e4ad76b75665a
@@ -139,13 +116,19 @@ Replace this app id if your app uses a different one:
 Error events:
 
 ```powershell
-$json = (Invoke-WebRequest "http://localhost:3000/api/events/error/apps/6a056df9898e4ad76b75665a").Content | ConvertFrom-Json
+$json = (Invoke-WebRequest "http://localhost:3000/api/events/error/apps/6a056df9898e4ad76b75665a" -UseBasicParsing).Content | ConvertFrom-Json
 $json.events | Sort-Object timestamp -Descending | Select-Object -First 5
 ```
 
 Performance events:
 
 ```powershell
-$json = (Invoke-WebRequest "http://localhost:3000/api/events/performance/apps/6a056df9898e4ad76b75665a").Content | ConvertFrom-Json
+$json = (Invoke-WebRequest "http://localhost:3000/api/events/performance/apps/6a056df9898e4ad76b75665a" -UseBasicParsing).Content | ConvertFrom-Json
 $json.events | Sort-Object timestamp -Descending | Select-Object -First 5
 ```
+
+## Notes
+
+- `localhost` means the computer running the browser. If a teammate opens the GitHub Pages tester, it will send events to that teammate's local backend.
+- The red JavaScript errors in Chrome DevTools are expected for the error test buttons. Those errors are intentionally thrown so the collector can report them.
+- The `Errors` counter in the tester means failed network/backend responses, not intentionally thrown JavaScript test errors.
